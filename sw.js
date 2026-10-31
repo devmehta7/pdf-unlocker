@@ -1,5 +1,5 @@
 // Bump CACHE when any file below changes so phones pick up the new version.
-const CACHE = "pdf-unlocker-v1";
+const CACHE = "pdf-unlocker-v2";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-512.png", "vendor/qpdf.js", "vendor/qpdf.wasm"];
 
 self.addEventListener("install", (e) => {

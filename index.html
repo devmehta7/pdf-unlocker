@@ -46,7 +46,8 @@
   #status { min-height: 1.5em; margin: 14px 0 0; font-size: 15px; }
   #status.ok { color: var(--ok); }
   #status.err { color: var(--err); }
-  #save { display: none; }
+  #actions { display: none; }
+  #download { margin-top: 10px; background: transparent; color: var(--accent); border: 1px solid var(--accent); }
   .note { color: var(--muted); font-size: 13px; margin-top: 20px; text-align: center; }
 </style>
 </head>
@@ -61,7 +62,10 @@
     <input type="password" id="password" autocomplete="off" placeholder="Leave empty if it opens without one">
     <button type="submit" id="unlock">Unlock</button>
     <p id="status" role="status"></p>
-    <button type="button" id="save">Save unlocked PDF</button>
+    <div id="actions">
+      <button type="button" id="save">Save unlocked PDF</button>
+      <button type="button" id="download">Download</button>
+    </div>
   </form>
   <p class="note">Works offline once loaded.</p>
 </main>
@@ -93,7 +97,7 @@
     const file = $("file").files[0];
     if (!file) return;
     unlocked = null;
-    $("save").style.display = "none";
+    $("actions").style.display = "none";
     $("unlock").disabled = true;
     setStatus("Unlocking…");
     try {
@@ -102,7 +106,7 @@
       unlocked = new File([bytes], name, { type: "application/pdf" });
       $("password").value = "";
       setStatus("Unlocked: " + name, "ok");
-      $("save").style.display = "block";
+      $("actions").style.display = "block";
     } catch (err) {
       setStatus(err.message, "err");
     } finally {
@@ -110,17 +114,23 @@
     }
   });
 
-  $("save").addEventListener("click", async () => {
-    if (navigator.canShare?.({ files: [unlocked] })) {
-      try { await navigator.share({ files: [unlocked] }); } catch (e) { if (e.name !== "AbortError") setStatus(e.message, "err"); }
-      return;
-    }
+  function download() {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(unlocked);
     a.download = unlocked.name;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  }
+
+  $("save").addEventListener("click", async () => {
+    if (navigator.canShare?.({ files: [unlocked] })) {
+      try { await navigator.share({ files: [unlocked] }); } catch (e) { if (e.name !== "AbortError") setStatus(e.message, "err"); }
+      return;
+    }
+    download();
   });
+
+  $("download").addEventListener("click", download);
 
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>
