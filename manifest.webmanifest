@@ -3,8 +3,8 @@
   "short_name": "PDF Unlock",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f5f6f8",
-  "theme_color": "#2563eb",
+  "background_color": "#f0f9ff",
+  "theme_color": "#0369a1",
   "icons": [
     { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }

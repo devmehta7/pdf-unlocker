@@ -7,76 +7,189 @@
 <meta name="description" content="Remove the password from a PDF on your own device. Nothing is uploaded.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="PDF Unlock">
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#f0f9ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
   :root {
-    --bg: #f5f6f8; --card: #ffffff; --text: #111827; --muted: #6b7280;
-    --border: #d1d5db; --accent: #2563eb; --accent-text: #ffffff;
-    --ok: #15803d; --err: #b91c1c;
+    --bg: #f0f9ff; --surface: #ffffff; --text: #0f172a; --muted: #475569;
+    --border: #cbd5e1; --drop: #7dd3fc; --drop-bg: #f0f9ff;
+    --primary: #0369a1; --primary-hover: #075985; --on-primary: #ffffff;
+    --ok: #15803d; --ok-bg: #dcfce7; --err: #b91c1c;
+    --focus: #0ea5e9; --shadow: 0 1px 2px rgb(15 23 42 / .06), 0 8px 24px rgb(15 23 42 / .06);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0b0d12; --card: #161a22; --text: #e5e7eb; --muted: #9ca3af;
-      --border: #2d3340; --accent: #3b82f6; --ok: #4ade80; --err: #f87171;
+      --bg: #0b1220; --surface: #111a2e; --text: #e2e8f0; --muted: #94a3b8;
+      --border: #334155; --drop: #0e7490; --drop-bg: #0f1b30;
+      --primary: #38bdf8; --primary-hover: #7dd3fc; --on-primary: #082f49;
+      --ok: #4ade80; --ok-bg: #14532d; --err: #f87171;
+      --focus: #7dd3fc; --shadow: none;
     }
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body {
     margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
-    font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    padding: max(24px, env(safe-area-inset-top)) 16px 32px;
+    font: 17px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
   }
-  main { max-width: 440px; margin: 0 auto; }
-  h1 { font-size: 28px; margin: 8px 0 4px; }
-  .sub { color: var(--muted); margin: 0 0 24px; font-size: 15px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  main { max-width: 420px; margin: 0 auto; }
+  .i { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .brand { display: flex; align-items: center; gap: 10px; margin: 8px 0 20px; }
+  .brand .i { color: var(--primary); width: 28px; height: 28px; }
+  h1 { font-size: 24px; margin: 0; letter-spacing: -.01em; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); }
+
+  .drop {
+    display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+    padding: 40px 16px; border: 2px dashed var(--drop); border-radius: 12px; background: var(--drop-bg);
+    cursor: pointer; transition: border-color .2s, background-color .2s;
+  }
+  .drop .i { width: 40px; height: 40px; color: var(--primary); margin-bottom: 6px; }
+  .drop:hover, .drop.over { border-color: var(--primary); }
+  .drop:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .drop-title { font-weight: 600; font-size: 18px; }
+  .drop-hint { color: var(--muted); font-size: 15px; font-weight: 400; }
+  .desktop-only { display: none; }
+  @media (hover: hover) { .desktop-only { display: inline; } }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .file-row { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .file-row .i { color: var(--primary); }
+  .file-meta { flex: 1; min-width: 0; }
+  .file-meta strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
+  .file-meta span { color: var(--muted); font-size: 14px; }
+
   label { display: block; font-weight: 600; font-size: 15px; margin: 0 0 6px; }
-  input { width: 100%; font: inherit; color: inherit; }
-  input[type=password] {
-    padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: transparent;
+  .pw { position: relative; }
+  .pw input {
+    width: 100%; min-height: 48px; padding: 12px 52px 12px 14px; font: inherit; color: inherit;
+    background: transparent; border: 1px solid var(--border); border-radius: 10px; transition: border-color .2s;
   }
-  input[type=file] { margin-bottom: 18px; font-size: 15px; }
-  button {
-    width: 100%; margin-top: 18px; padding: 14px; border: 0; border-radius: 10px;
-    background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600;
+  .pw input:focus { outline: 3px solid var(--focus); outline-offset: 1px; border-color: var(--primary); }
+  .pw input[aria-invalid=true] { border-color: var(--err); }
+  .pw button {
+    position: absolute; top: 2px; right: 2px; width: 44px; height: 44px; display: grid; place-items: center;
+    border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer;
   }
-  button:disabled { opacity: .5; }
-  #status { min-height: 1.5em; margin: 14px 0 0; font-size: 15px; }
-  #status.ok { color: var(--ok); }
-  #status.err { color: var(--err); }
-  #actions { display: none; }
-  #download { margin-top: 10px; background: transparent; color: var(--accent); border: 1px solid var(--accent); }
-  .note { color: var(--muted); font-size: 13px; margin-top: 20px; text-align: center; }
+  .pw button:hover { color: var(--text); }
+  .pw button[aria-pressed=true] .eye, .pw button[aria-pressed=false] .eye-off { display: none; }
+  .hint { color: var(--muted); font-size: 14px; margin: 8px 0 0; }
+  .error { color: var(--err); font-size: 15px; font-weight: 500; margin: 8px 0 0; }
+
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 50px;
+    margin-top: 16px; padding: 12px 16px; border-radius: 12px; font: inherit; font-weight: 600; cursor: pointer;
+    transition: background-color .2s, color .2s, border-color .2s;
+  }
+  .btn .i { width: 20px; height: 20px; }
+  .btn:focus-visible, .link:focus-visible, .pw button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .primary { background: var(--primary); color: var(--on-primary); border: 0; }
+  .primary:hover { background: var(--primary-hover); }
+  .primary:disabled { cursor: progress; opacity: .8; }
+  .secondary { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); margin-top: 10px; }
+  .secondary:hover { background: var(--drop-bg); }
+  .link {
+    display: block; margin: 14px auto 0; min-height: 44px; padding: 0 12px; border: 0; background: none;
+    color: var(--primary); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; border-radius: 8px;
+  }
+  .link.inline { margin: 0; padding: 0 8px; }
+
+  .spinner { width: 18px; height: 18px; border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .done { text-align: center; }
+  .badge { width: 64px; height: 64px; margin: 4px auto 12px; display: grid; place-items: center; border-radius: 50%; background: var(--ok-bg); color: var(--ok); animation: pop .25s ease-out; }
+  .badge .i { width: 32px; height: 32px; stroke-width: 2.5; }
+  @keyframes pop { from { transform: scale(.6); opacity: 0; } }
+  .done h2 { font-size: 22px; margin: 0; outline: none; }
+  .done-name { color: var(--muted); font-size: 15px; margin: 4px 0 8px; overflow-wrap: anywhere; }
+
+  .trust { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--muted); font-size: 14px; margin-top: 20px; }
+  .trust .i { width: 18px; height: 18px; color: var(--ok); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
 </style>
 </head>
 <body>
 <main>
-  <h1>PDF Unlocker</h1>
-  <p class="sub">Removes a PDF's password on this device. The file is never uploaded.</p>
-  <form class="card" id="form">
-    <label for="file">PDF</label>
-    <input type="file" id="file" accept="application/pdf,.pdf" required>
-    <label for="password">Password</label>
-    <input type="password" id="password" autocomplete="off" placeholder="Leave empty if it opens without one">
-    <button type="submit" id="unlock">Unlock</button>
-    <p id="status" role="status"></p>
-    <div id="actions">
-      <button type="button" id="save">Share</button>
-      <button type="button" id="download">Download</button>
+  <header class="brand">
+    <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+    <h1>PDF Unlocker</h1>
+  </header>
+
+  <section id="step-pick" class="card">
+    <label class="drop" id="drop">
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></svg>
+      <span class="drop-title">Choose a PDF</span>
+      <span class="drop-hint">Tap to browse<span class="desktop-only"> or drop it here</span></span>
+      <input type="file" id="file" class="sr-only" accept="application/pdf,.pdf">
+    </label>
+    <p id="pick-error" class="error" role="alert" hidden></p>
+  </section>
+
+  <form id="step-password" class="card" hidden>
+    <div class="file-row">
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+      <div class="file-meta"><strong id="file-name"></strong><span id="file-size"></span></div>
+      <button type="button" id="change" class="link inline">Change</button>
     </div>
+    <label for="password">Password</label>
+    <div class="pw">
+      <input type="password" id="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="pw-hint pw-error">
+      <button type="button" id="toggle" aria-label="Show password" aria-pressed="false">
+        <svg class="i eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="i eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>
+      </button>
+    </div>
+    <p id="pw-hint" class="hint">Leave empty if the PDF opens without one.</p>
+    <p id="pw-error" class="error" role="alert" hidden></p>
+    <button type="submit" id="unlock" class="btn primary"><span class="spinner" hidden></span><span id="unlock-label">Unlock</span></button>
   </form>
-  <p class="note">Works offline once loaded.</p>
+
+  <section id="step-done" class="card done" hidden>
+    <div class="badge"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+    <h2 id="done-title" tabindex="-1">Unlocked</h2>
+    <p id="done-name" class="done-name"></p>
+    <button type="button" id="share" class="btn primary">
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg>Share
+    </button>
+    <button type="button" id="download" class="btn secondary">
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Download
+    </button>
+    <p id="done-error" class="error" role="alert" hidden></p>
+    <button type="button" id="again" class="link">Unlock another PDF</button>
+  </section>
+
+  <p class="trust">
+    <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+    Stays on this device · Works offline
+  </p>
 </main>
 <script src="vendor/qpdf.js"></script>
 <script>
   const $ = (id) => document.getElementById(id);
+  let file = null;
   let unlocked = null;
 
-  function setStatus(text, kind = "") {
-    $("status").textContent = text;
-    $("status").className = kind;
+  function show(step) {
+    for (const id of ["step-pick", "step-password", "step-done"]) $(id).hidden = id !== step;
+  }
+
+  function setError(id, text) {
+    $(id).textContent = text;
+    $(id).hidden = !text;
+  }
+
+  function formatSize(bytes) {
+    return bytes < 1024 * 1024 ? Math.max(1, Math.round(bytes / 1024)) + " KB" : (bytes / 1024 / 1024).toFixed(1) + " MB";
   }
 
   // A fresh qpdf instance per run, so nothing from a previous file stays in memory.
@@ -92,25 +205,75 @@
     return qpdf.FS.readFile("/out.pdf");
   }
 
-  $("form").addEventListener("submit", async (e) => {
+  function choose(f) {
+    if (!f) return;
+    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
+      setError("pick-error", "That isn't a PDF. Choose a .pdf file.");
+      return;
+    }
+    file = f;
+    setError("pick-error", "");
+    $("file-name").textContent = f.name;
+    $("file-size").textContent = formatSize(f.size);
+    show("step-password");
+    $("password").focus();
+  }
+
+  function reset() {
+    file = unlocked = null;
+    $("file").value = "";
+    $("password").value = "";
+    $("password").removeAttribute("aria-invalid");
+    for (const id of ["pick-error", "pw-error", "done-error"]) setError(id, "");
+    show("step-pick");
+  }
+
+  $("file").addEventListener("change", () => choose($("file").files[0]));
+
+  $("drop").addEventListener("dragover", (e) => { e.preventDefault(); $("drop").classList.add("over"); });
+  $("drop").addEventListener("dragleave", () => $("drop").classList.remove("over"));
+  $("drop").addEventListener("drop", (e) => {
     e.preventDefault();
-    const file = $("file").files[0];
-    if (!file) return;
-    unlocked = null;
-    $("actions").style.display = "none";
+    $("drop").classList.remove("over");
+    choose(e.dataTransfer.files[0]);
+  });
+
+  $("change").addEventListener("click", reset);
+  $("again").addEventListener("click", reset);
+
+  $("toggle").addEventListener("click", () => {
+    const showing = $("password").type === "text";
+    $("password").type = showing ? "password" : "text";
+    $("toggle").setAttribute("aria-pressed", String(!showing));
+    $("toggle").setAttribute("aria-label", showing ? "Show password" : "Hide password");
+  });
+
+  $("password").addEventListener("input", () => {
+    $("password").removeAttribute("aria-invalid");
+    setError("pw-error", "");
+  });
+
+  $("step-password").addEventListener("submit", async (e) => {
+    e.preventDefault();
     $("unlock").disabled = true;
-    setStatus("Unlocking…");
+    $("unlock").querySelector(".spinner").hidden = false;
+    $("unlock-label").textContent = "Unlocking…";
     try {
       const bytes = await unlock(file, $("password").value);
       const name = file.name.replace(/\.pdf$/i, "") + "-unlocked.pdf";
       unlocked = new File([bytes], name, { type: "application/pdf" });
       $("password").value = "";
-      setStatus("Unlocked: " + name, "ok");
-      $("actions").style.display = "block";
+      $("done-name").textContent = name;
+      show("step-done");
+      $("done-title").focus();
     } catch (err) {
-      setStatus(err.message, "err");
+      $("password").setAttribute("aria-invalid", "true");
+      setError("pw-error", err.message);
+      $("password").focus();
     } finally {
       $("unlock").disabled = false;
+      $("unlock").querySelector(".spinner").hidden = true;
+      $("unlock-label").textContent = "Unlock";
     }
   });
 
@@ -122,9 +285,9 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
   }
 
-  $("save").addEventListener("click", async () => {
+  $("share").addEventListener("click", async () => {
     if (navigator.canShare?.({ files: [unlocked] })) {
-      try { await navigator.share({ files: [unlocked] }); } catch (e) { if (e.name !== "AbortError") setStatus(e.message, "err"); }
+      try { await navigator.share({ files: [unlocked] }); } catch (e) { if (e.name !== "AbortError") setError("done-error", e.message); }
       return;
     }
     download();
