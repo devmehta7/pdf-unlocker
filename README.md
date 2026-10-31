@@ -2,7 +2,7 @@
 
 **Live app: https://devmehta7.github.io/pdf-unlocker/**
 
-Removes the password from a PDF entirely on your device. It runs [qpdf](https://github.com/qpdf/qpdf) compiled to WebAssembly (`vendor/`, from `@neslinesli93/qpdf-wasm@0.3.0`) inside the browser. The PDF and password are never sent anywhere.
+Removes the password from a PDF entirely on your device. It runs [qpdf](https://github.com/qpdf/qpdf) compiled to WebAssembly (`vendor/`, from `@neslinesli93/qpdf-wasm@0.3.0`) inside the browser. **The PDF and password are never sent anywhere.**
 
 Works on iPhone, Android and desktop browsers.
 
