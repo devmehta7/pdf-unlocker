@@ -12,6 +12,6 @@ Then open http://localhost:8000. Test files are in `test-fixtures/` (password: `
 
 1. Host the folder on any static HTTPS host (e.g. GitHub Pages).
 2. Open the URL in Safari → Share → **Add to Home Screen**.
-3. Open it, pick a PDF, enter the password, tap **Unlock**, then **Save unlocked PDF** → Save to Files.
+3. Open it, pick a PDF, enter the password, tap **Unlock**, then **Share** → Save to Files (or **Download**).
 
 After the first load it works offline. When you change any file, bump `CACHE` in `sw.js`.
