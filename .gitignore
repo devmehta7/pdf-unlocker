@@ -1,0 +1,4 @@
+# Never commit real documents; only the synthetic test fixtures.
+*.pdf
+!test-fixtures/*.pdf
+.DS_Store

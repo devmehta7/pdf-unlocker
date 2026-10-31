@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PDF Unlocker</title>
+<meta name="description" content="Remove the password from a PDF on your own device. Nothing is uploaded.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PDF Unlock">
+<meta name="theme-color" content="#2563eb">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #ffffff; --text: #111827; --muted: #6b7280;
+    --border: #d1d5db; --accent: #2563eb; --accent-text: #ffffff;
+    --ok: #15803d; --err: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b0d12; --card: #161a22; --text: #e5e7eb; --muted: #9ca3af;
+      --border: #2d3340; --accent: #3b82f6; --ok: #4ade80; --err: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+    font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: max(24px, env(safe-area-inset-top)) 16px 32px;
+  }
+  main { max-width: 440px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 8px 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: 15px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  label { display: block; font-weight: 600; font-size: 15px; margin: 0 0 6px; }
+  input { width: 100%; font: inherit; color: inherit; }
+  input[type=password] {
+    padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: transparent;
+  }
+  input[type=file] { margin-bottom: 18px; font-size: 15px; }
+  button {
+    width: 100%; margin-top: 18px; padding: 14px; border: 0; border-radius: 10px;
+    background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600;
+  }
+  button:disabled { opacity: .5; }
+  #status { min-height: 1.5em; margin: 14px 0 0; font-size: 15px; }
+  #status.ok { color: var(--ok); }
+  #status.err { color: var(--err); }
+  #save { display: none; }
+  .note { color: var(--muted); font-size: 13px; margin-top: 20px; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <h1>PDF Unlocker</h1>
+  <p class="sub">Removes a PDF's password on this device. The file is never uploaded.</p>
+  <form class="card" id="form">
+    <label for="file">PDF</label>
+    <input type="file" id="file" accept="application/pdf,.pdf" required>
+    <label for="password">Password</label>
+    <input type="password" id="password" autocomplete="off" placeholder="Leave empty if it opens without one">
+    <button type="submit" id="unlock">Unlock</button>
+    <p id="status" role="status"></p>
+    <button type="button" id="save">Save unlocked PDF</button>
+  </form>
+  <p class="note">Works offline once loaded.</p>
+</main>
+<script src="vendor/qpdf.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  let unlocked = null;
+
+  function setStatus(text, kind = "") {
+    $("status").textContent = text;
+    $("status").className = kind;
+  }
+
+  // A fresh qpdf instance per run, so nothing from a previous file stays in memory.
+  async function unlock(file, password) {
+    const qpdf = await Module({ locateFile: () => "vendor/qpdf.wasm", noInitialRun: true });
+    qpdf.FS.writeFile("/in.pdf", new Uint8Array(await file.arrayBuffer()));
+    const args = ["--decrypt", "/in.pdf", "/out.pdf"];
+    if (password) args.unshift("--password=" + password);
+    let code;
+    try { code = qpdf.callMain(args); } catch (e) { code = e.status ?? 2; }
+    // qpdf exit codes: 0 ok, 3 ok with warnings, 2 error (usually a wrong password)
+    if (code !== 0 && code !== 3) throw new Error("Wrong password, or the file isn't a valid PDF.");
+    return qpdf.FS.readFile("/out.pdf");
+  }
+
+  $("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const file = $("file").files[0];
+    if (!file) return;
+    unlocked = null;
+    $("save").style.display = "none";
+    $("unlock").disabled = true;
+    setStatus("Unlocking…");
+    try {
+      const bytes = await unlock(file, $("password").value);
+      const name = file.name.replace(/\.pdf$/i, "") + "-unlocked.pdf";
+      unlocked = new File([bytes], name, { type: "application/pdf" });
+      $("password").value = "";
+      setStatus("Unlocked: " + name, "ok");
+      $("save").style.display = "block";
+    } catch (err) {
+      setStatus(err.message, "err");
+    } finally {
+      $("unlock").disabled = false;
+    }
+  });
+
+  $("save").addEventListener("click", async () => {
+    if (navigator.canShare?.({ files: [unlocked] })) {
+      try { await navigator.share({ files: [unlocked] }); } catch (e) { if (e.name !== "AbortError") setStatus(e.message, "err"); }
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(unlocked);
+    a.download = unlocked.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  });
+
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
