@@ -1,6 +1,10 @@
 # Never commit real documents; only the synthetic test fixtures.
 *.pdf
-!test-fixtures/*.pdf
+*.docx
+*.xlsx
+*.pptx
+*.zip
+!test-fixtures/*
 .DS_Store
 
 # Local Claude Code skills (uipro)

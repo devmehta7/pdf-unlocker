@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PDF Unlocker</title>
-<meta name="description" content="Remove the password from a PDF on your own device. Nothing is uploaded.">
+<title>Private Doc Tools</title>
+<meta name="description" content="Unlock, lock, merge and edit PDFs, turn photos into PDFs, and unlock Word, Excel and ZIP files, all on your own device. Nothing is uploaded.">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="PDF Unlock">
+<meta name="apple-mobile-web-app-title" content="Doc Tools">
 <meta name="theme-color" content="#f0f9ff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -38,23 +38,41 @@
   }
   main { max-width: 420px; margin: 0 auto; }
   .i { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-  .brand { display: flex; align-items: center; gap: 10px; margin: 8px 0 20px; }
-  .brand .i { color: var(--primary); width: 28px; height: 28px; }
+  .brand { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 8px 0 20px; }
+  .brand > .i { color: var(--primary); width: 28px; height: 28px; }
   h1 { font-size: 24px; margin: 0; letter-spacing: -.01em; }
+  .back {
+    width: 44px; height: 44px; margin-left: -10px; display: grid; place-items: center; flex: none;
+    border: 0; border-radius: 10px; background: none; color: var(--primary); cursor: pointer;
+  }
+  .back:hover { background: var(--surface); }
+  .back .i { width: 28px; height: 28px; }
+
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tile {
+    display: flex; flex-direction: column; gap: 2px; min-height: 120px; padding: 16px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow);
+    color: var(--text); text-decoration: none; transition: border-color .2s;
+  }
+  .tile:hover { border-color: var(--primary); }
+  .tile-icon { width: 44px; height: 44px; display: grid; place-items: center; margin-bottom: 8px; border-radius: 12px; background: var(--drop-bg); color: var(--primary); }
+  .tile-name { font-weight: 600; font-size: 16px; }
+  .tile-hint { color: var(--muted); font-size: 14px; line-height: 1.35; }
 
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); }
 
   .drop {
     display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
     padding: 40px 16px; border: 2px dashed var(--drop); border-radius: 12px; background: var(--drop-bg);
-    cursor: pointer; transition: border-color .2s, background-color .2s;
+    font-weight: 400; cursor: pointer; transition: border-color .2s, background-color .2s;
   }
   .drop .i { width: 40px; height: 40px; color: var(--primary); margin-bottom: 6px; }
   .drop:hover, .drop.over { border-color: var(--primary); }
   .drop:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
   .drop-title { font-weight: 600; font-size: 18px; }
-  .drop-hint { color: var(--muted); font-size: 15px; font-weight: 400; }
+  .drop-hint { color: var(--muted); font-size: 15px; }
   .desktop-only { display: none; }
   @media (hover: hover) { .desktop-only { display: inline; } }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -65,14 +83,29 @@
   .file-meta strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
   .file-meta span { color: var(--muted); font-size: 14px; }
 
-  label { display: block; font-weight: 600; font-size: 15px; margin: 0 0 6px; }
-  .pw { position: relative; }
-  .pw input {
-    width: 100%; min-height: 48px; padding: 12px 52px 12px 14px; font: inherit; color: inherit;
+  .list { list-style: none; margin: 0 0 8px; padding: 0; }
+  .item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .thumb { width: 44px; height: 44px; flex: none; object-fit: cover; border-radius: 8px; background: var(--drop-bg); }
+  .icon-btn {
+    width: 44px; height: 44px; flex: none; display: grid; place-items: center;
+    border: 0; border-radius: 10px; background: none; color: var(--muted); cursor: pointer;
+  }
+  .icon-btn:hover:not(:disabled) { color: var(--text); background: var(--drop-bg); }
+  .icon-btn:disabled { opacity: .35; cursor: default; }
+  .icon-btn .i { width: 20px; height: 20px; }
+  .link.add { display: flex; align-items: center; gap: 6px; margin: 4px auto 16px; }
+  .add .i { width: 20px; height: 20px; }
+
+  .field + .field { margin-top: 16px; }
+  label, .label { display: block; font-weight: 600; font-size: 15px; margin: 0 0 6px; }
+  .input {
+    width: 100%; min-height: 48px; padding: 12px 14px; font: inherit; color: inherit;
     background: transparent; border: 1px solid var(--border); border-radius: 10px; transition: border-color .2s;
   }
-  .pw input:focus { outline: 3px solid var(--focus); outline-offset: 1px; border-color: var(--primary); }
-  .pw input[aria-invalid=true] { border-color: var(--err); }
+  .input:focus { outline: 3px solid var(--focus); outline-offset: 1px; border-color: var(--primary); }
+  .input[aria-invalid=true] { border-color: var(--err); }
+  .pw { position: relative; }
+  .pw .input { padding-right: 52px; }
   .pw button {
     position: absolute; top: 2px; right: 2px; width: 44px; height: 44px; display: grid; place-items: center;
     border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer;
@@ -80,7 +113,17 @@
   .pw button:hover { color: var(--text); }
   .pw button[aria-pressed=true] .eye, .pw button[aria-pressed=false] .eye-off { display: none; }
   .hint { color: var(--muted); font-size: 14px; margin: 8px 0 0; }
-  .error { color: var(--err); font-size: 15px; font-weight: 500; margin: 8px 0 0; }
+  .error { color: var(--err); font-size: 15px; font-weight: 500; margin: 12px 0 0; }
+  .error a { color: inherit; font-weight: 600; }
+
+  .seg { display: flex; padding: 3px; border: 1px solid var(--border); border-radius: 12px; }
+  .seg label {
+    position: relative; flex: 1; display: grid; place-items: center; min-height: 44px; margin: 0; border-radius: 9px;
+    font-weight: 500; color: var(--muted); cursor: pointer; transition: background-color .2s, color .2s;
+  }
+  .seg label:has(:checked) { background: var(--primary); color: var(--on-primary); font-weight: 600; }
+  .seg label:has(:focus-visible) { outline: 3px solid var(--focus); outline-offset: 1px; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
 
   .btn {
     display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 50px;
@@ -88,7 +131,6 @@
     transition: background-color .2s, color .2s, border-color .2s;
   }
   .btn .i { width: 20px; height: 20px; }
-  .btn:focus-visible, .link:focus-visible, .pw button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   .primary { background: var(--primary); color: var(--on-primary); border: 0; }
   .primary:hover { background: var(--primary-hover); }
   .primary:disabled { cursor: progress; opacity: .8; }
@@ -119,14 +161,12 @@
     color: var(--primary); font-size: 14px; font-weight: 600; cursor: pointer; list-style: none; border-radius: 8px;
   }
   .safe summary::-webkit-details-marker { display: none; }
-  .safe summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   .safe summary .i { width: 16px; height: 16px; transition: transform .2s; }
   .safe[open] summary .i { transform: rotate(180deg); }
   .safe ul { margin: 4px 0 0; padding: 16px 16px 16px 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--muted); font-size: 15px; }
   .safe li + li { margin-top: 8px; }
   .safe strong { color: var(--text); }
   .safe a { color: var(--primary); font-weight: 600; }
-  .safe a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -136,52 +176,149 @@
 <body>
 <main>
   <header class="brand">
-    <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-    <h1>PDF Unlocker</h1>
+    <button type="button" id="back" class="back" aria-label="Back to all tools" hidden>
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <svg class="i" id="brand-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+    <h1 id="title">Private Doc Tools</h1>
   </header>
 
-  <section id="step-pick" class="card">
-    <label class="drop" id="drop">
-      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></svg>
-      <span class="drop-title">Choose a PDF</span>
-      <span class="drop-hint">Tap to browse<span class="desktop-only"> or drop it here</span></span>
-      <input type="file" id="file" class="sr-only" accept="application/pdf,.pdf">
-    </label>
-    <p id="pick-error" class="error" role="alert" hidden></p>
-  </section>
+  <nav id="home" class="tiles" aria-label="Tools">
+    <a class="tile" href="#unlock">
+      <span class="tile-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></span>
+      <span class="tile-name">Unlock</span><span class="tile-hint">PDF, Word, Excel, ZIP</span>
+    </a>
+    <a class="tile" href="#lock">
+      <span class="tile-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+      <span class="tile-name">Lock PDF</span><span class="tile-hint">Add a password</span>
+    </a>
+    <a class="tile" href="#merge">
+      <span class="tile-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></span>
+      <span class="tile-name">Merge PDFs</span><span class="tile-hint">Combine into one</span>
+    </a>
+    <a class="tile" href="#pages">
+      <span class="tile-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg></span>
+      <span class="tile-name">Pages</span><span class="tile-hint">Keep or remove pages</span>
+    </a>
+    <a class="tile" href="#rotate">
+      <span class="tile-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span>
+      <span class="tile-name">Rotate</span><span class="tile-hint">Fix sideways pages</span>
+    </a>
+    <a class="tile" href="#photos">
+      <span class="tile-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
+      <span class="tile-name">Photos → PDF</span><span class="tile-hint">Receipts, scans, IDs</span>
+    </a>
+  </nav>
 
-  <form id="step-password" class="card" hidden>
-    <div class="file-row">
-      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-      <div class="file-meta"><strong id="file-name"></strong><span id="file-size"></span></div>
-      <button type="button" id="change" class="link inline">Change</button>
-    </div>
-    <label for="password">Password</label>
-    <div class="pw">
-      <input type="password" id="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="pw-hint pw-error">
-      <button type="button" id="toggle" aria-label="Show password" aria-pressed="false">
-        <svg class="i eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
-        <svg class="i eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>
+  <div id="tool" hidden>
+    <section id="step-pick" class="card">
+      <label class="drop" id="drop">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></svg>
+        <span class="drop-title" id="pick-title">Choose a file</span>
+        <span class="drop-hint">Tap to browse<span class="desktop-only"> or drop here</span></span>
+        <span class="drop-hint" id="pick-types"></span>
+        <input type="file" id="file" class="sr-only">
+      </label>
+      <p id="pick-error" class="error" role="alert" hidden></p>
+    </section>
+
+    <form id="step-options" class="card" novalidate hidden>
+      <div class="file-row" data-tools="unlock lock pages rotate">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        <div class="file-meta"><strong id="file-name"></strong><span id="file-size"></span></div>
+        <button type="button" id="change" class="link inline">Change</button>
+      </div>
+
+      <div data-tools="merge photos">
+        <ul id="file-list" class="list"></ul>
+        <button type="button" id="add" class="link add">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add more
+        </button>
+      </div>
+
+      <div class="field" data-tools="unlock">
+        <label for="password">Password</label>
+        <div class="pw">
+          <input type="password" id="password" class="input" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="pw-hint opt-error">
+          <button type="button" aria-label="Show password" aria-pressed="false">
+            <svg class="i eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="i eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>
+          </button>
+        </div>
+        <p id="pw-hint" class="hint">Leave empty if the PDF opens without one.</p>
+      </div>
+
+      <div data-tools="lock">
+        <div class="field">
+          <label for="lock-password">New password</label>
+          <div class="pw">
+            <input type="password" id="lock-password" class="input" autocomplete="new-password" autocapitalize="off" spellcheck="false" aria-describedby="opt-error">
+            <button type="button" aria-label="Show password" aria-pressed="false">
+              <svg class="i eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="i eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="lock-confirm">Confirm password</label>
+          <div class="pw">
+            <input type="password" id="lock-confirm" class="input" autocomplete="new-password" autocapitalize="off" spellcheck="false" aria-describedby="opt-error">
+            <button type="button" aria-label="Show password" aria-pressed="false">
+              <svg class="i eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="i eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div data-tools="pages">
+        <div class="field" role="radiogroup" aria-labelledby="pages-mode-label">
+          <span class="label" id="pages-mode-label">I want to</span>
+          <div class="seg">
+            <label><input type="radio" name="pages-mode" value="keep" checked>Keep pages</label>
+            <label><input type="radio" name="pages-mode" value="remove">Remove pages</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="range">Pages</label>
+          <input type="text" id="range" class="input" inputmode="numeric" placeholder="e.g. 1-3, 5" autocomplete="off" aria-describedby="opt-error">
+        </div>
+      </div>
+
+      <div data-tools="rotate">
+        <div class="field" role="radiogroup" aria-labelledby="angle-label">
+          <span class="label" id="angle-label">Turn</span>
+          <div class="seg">
+            <label><input type="radio" name="angle" value="-90">Left</label>
+            <label><input type="radio" name="angle" value="+90" checked>Right</label>
+            <label><input type="radio" name="angle" value="+180">180°</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="rotate-range">Pages <span class="hint">(optional)</span></label>
+          <input type="text" id="rotate-range" class="input" inputmode="numeric" placeholder="All pages" autocomplete="off" aria-describedby="opt-error">
+        </div>
+      </div>
+
+      <p id="opt-error" class="error" role="alert" hidden></p>
+      <button type="submit" id="run" class="btn primary"><span class="spinner" id="run-spinner" hidden></span><span id="run-label">Go</span></button>
+    </form>
+
+    <section id="step-done" class="card done" hidden>
+      <div class="badge"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <h2 id="done-title" tabindex="-1">Done</h2>
+      <p id="done-name" class="done-name"></p>
+      <p id="done-note" class="hint" hidden>Keep the password safe. Without it, the file can't be opened.</p>
+      <button type="button" id="share" class="btn primary">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg>Share
       </button>
-    </div>
-    <p id="pw-hint" class="hint">Leave empty if the PDF opens without one.</p>
-    <p id="pw-error" class="error" role="alert" hidden></p>
-    <button type="submit" id="unlock" class="btn primary"><span class="spinner" hidden></span><span id="unlock-label">Unlock</span></button>
-  </form>
-
-  <section id="step-done" class="card done" hidden>
-    <div class="badge"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
-    <h2 id="done-title" tabindex="-1">Unlocked</h2>
-    <p id="done-name" class="done-name"></p>
-    <button type="button" id="share" class="btn primary">
-      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg>Share
-    </button>
-    <button type="button" id="download" class="btn secondary">
-      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Download
-    </button>
-    <p id="done-error" class="error" role="alert" hidden></p>
-    <button type="button" id="again" class="link">Unlock another PDF</button>
-  </section>
+      <button type="button" id="download" class="btn secondary">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Download
+      </button>
+      <p id="done-error" class="error" role="alert" hidden></p>
+      <button type="button" id="again" class="link">Do another</button>
+    </section>
+  </div>
 
   <p class="trust">
     <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
@@ -190,136 +327,25 @@
   <details class="safe">
     <summary>How is this safe?<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
     <ul>
-      <li>Your PDF is unlocked inside your browser by <a href="https://github.com/qpdf/qpdf" target="_blank" rel="noopener">qpdf</a>, a trusted open-source PDF tool.</li>
+      <li>Your files are processed inside your browser by trusted open-source tools such as <a href="https://github.com/qpdf/qpdf" target="_blank" rel="noopener">qpdf</a>.</li>
       <li>There is no server that receives files. GitHub Pages only delivers the app's code to your phone.</li>
       <li><strong>Try it yourself:</strong> turn on airplane mode and it still works.</li>
       <li>The full code is public on <a href="https://github.com/devmehta7/pdf-unlocker" target="_blank" rel="noopener">GitHub</a>.</li>
     </ul>
   </details>
 </main>
+
+<template id="item-tpl">
+  <li class="item">
+    <img class="thumb" alt="">
+    <div class="file-meta"><strong></strong><span></span></div>
+    <button type="button" class="icon-btn" data-move="-1"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
+    <button type="button" class="icon-btn" data-move="1"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button type="button" class="icon-btn" data-remove><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </li>
+</template>
+
 <script src="vendor/qpdf.js"></script>
-<script>
-  const $ = (id) => document.getElementById(id);
-  let file = null;
-  let unlocked = null;
-
-  function show(step) {
-    for (const id of ["step-pick", "step-password", "step-done"]) $(id).hidden = id !== step;
-  }
-
-  function setError(id, text) {
-    $(id).textContent = text;
-    $(id).hidden = !text;
-  }
-
-  function formatSize(bytes) {
-    return bytes < 1024 * 1024 ? Math.max(1, Math.round(bytes / 1024)) + " KB" : (bytes / 1024 / 1024).toFixed(1) + " MB";
-  }
-
-  // A fresh qpdf instance per run, so nothing from a previous file stays in memory.
-  async function unlock(file, password) {
-    const qpdf = await Module({ locateFile: () => "vendor/qpdf.wasm", noInitialRun: true });
-    qpdf.FS.writeFile("/in.pdf", new Uint8Array(await file.arrayBuffer()));
-    const args = ["--decrypt", "/in.pdf", "/out.pdf"];
-    if (password) args.unshift("--password=" + password);
-    let code;
-    try { code = qpdf.callMain(args); } catch (e) { code = e.status ?? 2; }
-    // qpdf exit codes: 0 ok, 3 ok with warnings, 2 error (usually a wrong password)
-    if (code !== 0 && code !== 3) throw new Error("Wrong password, or the file isn't a valid PDF.");
-    return qpdf.FS.readFile("/out.pdf");
-  }
-
-  function choose(f) {
-    if (!f) return;
-    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
-      setError("pick-error", "That isn't a PDF. Choose a .pdf file.");
-      return;
-    }
-    file = f;
-    setError("pick-error", "");
-    $("file-name").textContent = f.name;
-    $("file-size").textContent = formatSize(f.size);
-    show("step-password");
-    $("password").focus();
-  }
-
-  function reset() {
-    file = unlocked = null;
-    $("file").value = "";
-    $("password").value = "";
-    $("password").removeAttribute("aria-invalid");
-    for (const id of ["pick-error", "pw-error", "done-error"]) setError(id, "");
-    show("step-pick");
-  }
-
-  $("file").addEventListener("change", () => choose($("file").files[0]));
-
-  $("drop").addEventListener("dragover", (e) => { e.preventDefault(); $("drop").classList.add("over"); });
-  $("drop").addEventListener("dragleave", () => $("drop").classList.remove("over"));
-  $("drop").addEventListener("drop", (e) => {
-    e.preventDefault();
-    $("drop").classList.remove("over");
-    choose(e.dataTransfer.files[0]);
-  });
-
-  $("change").addEventListener("click", reset);
-  $("again").addEventListener("click", reset);
-
-  $("toggle").addEventListener("click", () => {
-    const showing = $("password").type === "text";
-    $("password").type = showing ? "password" : "text";
-    $("toggle").setAttribute("aria-pressed", String(!showing));
-    $("toggle").setAttribute("aria-label", showing ? "Show password" : "Hide password");
-  });
-
-  $("password").addEventListener("input", () => {
-    $("password").removeAttribute("aria-invalid");
-    setError("pw-error", "");
-  });
-
-  $("step-password").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    $("unlock").disabled = true;
-    $("unlock").querySelector(".spinner").hidden = false;
-    $("unlock-label").textContent = "Unlocking…";
-    try {
-      const bytes = await unlock(file, $("password").value);
-      const name = file.name.replace(/\.pdf$/i, "") + "-unlocked.pdf";
-      unlocked = new File([bytes], name, { type: "application/pdf" });
-      $("password").value = "";
-      $("done-name").textContent = name;
-      show("step-done");
-      $("done-title").focus();
-    } catch (err) {
-      $("password").setAttribute("aria-invalid", "true");
-      setError("pw-error", err.message);
-      $("password").focus();
-    } finally {
-      $("unlock").disabled = false;
-      $("unlock").querySelector(".spinner").hidden = true;
-      $("unlock-label").textContent = "Unlock";
-    }
-  });
-
-  function download() {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(unlocked);
-    a.download = unlocked.name;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-  }
-
-  $("share").addEventListener("click", async () => {
-    if (navigator.canShare?.({ files: [unlocked] })) {
-      try { await navigator.share({ files: [unlocked] }); } catch (e) { if (e.name !== "AbortError") setError("done-error", e.message); }
-      return;
-    }
-    download();
-  });
-
-  $("download").addEventListener("click", download);
-
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
-</script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

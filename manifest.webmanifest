@@ -1,6 +1,6 @@
 {
-  "name": "PDF Unlocker",
-  "short_name": "PDF Unlock",
+  "name": "Private Doc Tools",
+  "short_name": "Doc Tools",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f0f9ff",
