@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- The page may only load or contact its own origin, so no script (ours or a library's) can send files anywhere. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Private Doc Tools</title>
 <meta name="description" content="Unlock, lock, merge and edit PDFs, turn photos into PDFs, and unlock Word, Excel and ZIP files, all on your own device. Nothing is uploaded.">
 <meta name="apple-mobile-web-app-capable" content="yes">
